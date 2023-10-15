@@ -27,9 +27,19 @@ func main() {
 	u.Timeout = 60
 
 	updates := bot.GetUpdatesChan(u)
+
+	command := ""
 	for update := range updates {
 		if update.Message.IsCommand() {
-			go singleUpdate(update, bot)
+			command = update.Message.Command()
+			singleUpdate(update, bot)
+		} else {
+			if command == "add" {
+				addRepo(update, bot)
+			} else if command == "stop" {
+				stopRepo(update, bot)
+			}
+			command = ""
 		}
 	}
 }
@@ -39,24 +49,27 @@ func singleUpdate(update tgbotapi.Update, bot *tgbotapi.BotAPI) {
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 	switch command {
 	case "add":
-		msg.Text = handleAdd(update)
-	case "remove":
-		msg.Text = handleStop(update)
+		msg.Text = "Enter the a new repo"
+	case "stop":
+		msg.Text = "Enter the repo name"
 	case "list":
-		msg.Text = handleList(update)
-	case "help":
+		msg.Text = getList()
 	}
+
 	if _, err := bot.Send(msg); err != nil {
 		log.Println(err)
 	}
 }
 
-func handleAdd(update tgbotapi.Update) string {
+func addRepo(update tgbotapi.Update, bot *tgbotapi.BotAPI) {
 	repos[update.Message.Text] = true
-	return "added"
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text+" is being monitored now")
+	if _, err := bot.Send(msg); err != nil {
+		log.Println(err)
+	}
 }
 
-func handleList(update tgbotapi.Update) string {
+func getList() string {
 	list := ""
 	for repo, ok := range repos {
 		if ok {
@@ -66,7 +79,10 @@ func handleList(update tgbotapi.Update) string {
 	return list
 }
 
-func handleStop(update tgbotapi.Update) string {
+func stopRepo(update tgbotapi.Update, bot *tgbotapi.BotAPI) {
 	repos[update.Message.Text] = false
-	return "stoped"
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text+" is removed from the list")
+	if _, err := bot.Send(msg); err != nil {
+		log.Println(err)
+	}
 }
