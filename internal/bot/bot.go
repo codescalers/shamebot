@@ -25,22 +25,6 @@ func ManageCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI) {
 	}
 }
 
-func AddRepo(update tgbotapi.Update, bot *tgbotapi.BotAPI) {
-	// validate the repo name
-	repos[update.Message.Text] = true
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text+" is being monitored now")
-	if _, err := bot.Send(msg); err != nil {
-		log.Println(err)
-	}
-}
-
-func StopRepo(update tgbotapi.Update, bot *tgbotapi.BotAPI) {
-	repos[update.Message.Text] = false
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text+" is removed from the list")
-	if _, err := bot.Send(msg); err != nil {
-		log.Println(err)
-	}
-}
 
 func getList() string {
 	list := ""
