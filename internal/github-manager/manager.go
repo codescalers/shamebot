@@ -7,7 +7,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v56/github"
 )
 
 type MorntoringRequest struct {

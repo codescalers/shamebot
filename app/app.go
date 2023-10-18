@@ -2,6 +2,7 @@ package app
 
 import (
 	"log"
+	"os"
 	"strconv"
 	"time"
 
@@ -10,10 +11,8 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-const token = ""
-
 func StartApp() {
-	bot, err := tgbotapi.NewBotAPI(token)
+	bot, err := tgbotapi.NewBotAPI(os.Getenv("BOT_TOKEN"))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -57,12 +56,12 @@ func monitorProjects(addChan chan tgbotapi.Update, deleteChan chan tgbotapi.Upda
 		select {
 		case update := <-addChan:
 			if projectId, err := addProject(update.Message.Text, update, bot); err == nil {
-				projects[int64(projectId)] = update.Message.Chat.ID
+				projects[projectId] = update.Message.Chat.ID
 			}
 
 		case update := <-deleteChan:
 			if projectId, err := deleteProject(update.Message.Text, update, bot); err == nil {
-				projects[int64(projectId)] = 0
+				projects[projectId] = 0
 			}
 
 		case <-ticker.C:
@@ -75,9 +74,8 @@ func monitorProjects(addChan chan tgbotapi.Update, deleteChan chan tgbotapi.Upda
 	}
 }
 
-func addProject(project string, update tgbotapi.Update, bot *tgbotapi.BotAPI) (int, error) {
-	// parse project
-	projectId, err := strconv.Atoi(project)
+func addProject(project string, update tgbotapi.Update, bot *tgbotapi.BotAPI) (int64, error) {
+	projectId, err := getProjectId(project)
 	if err != nil {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "invalid project")
 		if _, err = bot.Send(msg); err != nil {
@@ -95,9 +93,8 @@ func addProject(project string, update tgbotapi.Update, bot *tgbotapi.BotAPI) (i
 	return projectId, nil
 }
 
-func deleteProject(project string, update tgbotapi.Update, bot *tgbotapi.BotAPI) (int, error) {
-	// parse project
-	projectId, err := strconv.Atoi(project)
+func deleteProject(project string, update tgbotapi.Update, bot *tgbotapi.BotAPI) (int64, error) {
+	projectId, err := getProjectId(project)
 	if err != nil {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "invalid project")
 		if _, err := bot.Send(msg); err != nil {
@@ -113,4 +110,13 @@ func deleteProject(project string, update tgbotapi.Update, bot *tgbotapi.BotAPI)
 	}
 
 	return projectId, nil
+}
+
+func getProjectId(project string) (int64, error) {
+	projectId, err := strconv.Atoi(project)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(projectId), nil
 }
